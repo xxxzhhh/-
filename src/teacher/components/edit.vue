@@ -99,7 +99,6 @@ const hand_change2 = () => {
         console.log(pagetable.value)
         post('/api/updatechange1', { id: remid.value, score: grade.value }).then((response) => {
             sid.value = '';
-            console.log(response)
             isVisible0.value = true;
             isVisible.value = false;
             isVisible1.value = false;

@@ -5,7 +5,7 @@
   <div class="main">
     <div class="first">
       <span>班级：</span>
-      <el-select v-model="class_value" class="m-2" placeholder="请选择班级">
+      <el-select v-model="class_value" class="m-2" placeholder="请选择班级" @change="handlechange1">
         <el-option v-for="item in classOptions" :key="item.value" :label="item.label" :value="item.label" />
       </el-select>
     </div>
@@ -28,7 +28,7 @@
     <div class="second">
       <span>考试名称：</span>
       <el-select v-model="exam_value1" class="m-2" placeholder="请选择考试名称">
-        <el-option v-for="item in examOptions1" :key="item.value" :label="item.name" :value="item.value" />
+        <el-option v-for="item in examOptions1" :key="item.value" :label="item.label" :value="item.label" />
       </el-select>
     </div>
     <div class="but" style="margin-left: 465px; position: relative;">
@@ -50,7 +50,8 @@ const exam_value = ref('')
 const exam_value1 = ref('')
 const classOptions = ref<Array<{ value: string; label: string }>>([])
 const examOptions = ref<Array<{ value: string; label: string }>>([])
-const examOptions1 = ref<Array<{ name: string; value: string }>>([])
+const examOptions1 = ref<Array<{ value: string; label: string }>>([])
+const monthexam2 = ref<Array<{ name: string; value: string }>>([])
 const monthexam = ref<Array<{ name: string; score: string }>>([])
 const monthexam1 = ref<Array<{ name: string; score: string }>>([])
 const barChart = ref<HTMLElement>();
@@ -58,13 +59,13 @@ const barChart1 = ref<HTMLElement>();
 const pieChart = ref<HTMLElement>();
 const myChart1 = ref<any>();
 const myChart2 = ref<any>();
+const myChart3 = ref<any>();
 const fetchData = async () => {
   try {
     classOptions.value = [];
     examOptions.value = [];
     const suboption = await get('/api/watchclass')
     classOptions.value = suboption.class;
-    examOptions.value = suboption.exam;
   } catch (error) {
     console.log('获取数据失败', error);
   }
@@ -78,7 +79,7 @@ const hand_search = () => {
   if (exam_value.value != '' && class_value.value != '') {
     post('/api/watchclass0', { class: class_value.value, exam: exam_value.value }).then((response) => {
       monthexam.value = response.inclassexam;
-      examOptions1.value = response.inclassexam1;
+      monthexam2.value = response.inclassexam1;
       isVisible.value = true;
       chartOptions();
       chartOptions1();
@@ -87,7 +88,19 @@ const hand_search = () => {
     })
   }
 }
-
+const handlechange1= ()=>{
+  if(class_value.value!=''){
+    post('/api/watchclass2', { class: class_value.value }).then((response) => {
+      examOptions.value=response.exam;
+      examOptions1.value=response.exam;
+    }).catch((err) => {
+      console.log(err);
+    })
+  }  else{
+    exam_value.value='';
+    exam_value1.value='';
+  }
+}
 const hand_search1 = () => {
   if (exam_value1.value != '') {
     post('/api/watchclass1', { exam1: exam_value1.value }).then((response) => {
@@ -100,13 +113,16 @@ const hand_search1 = () => {
   }
 }
 const reset = () => {
-  exam_value.value = '';
+  examOptions1.value=[];
+  examOptions.value=[];
   class_value.value = '';
+  exam_value.value = '';
   isVisible.value = false;
   myChart1.value.clear();
   myChart2.value.clear();
 }
 const reset1 = () => {
+  examOptions1.value=[];
   exam_value1.value = '';
   isVisible1.value = false;
   myChart1.value.clear();
@@ -158,7 +174,7 @@ function chartOptions1() {
   if (myChart2.value) {
     myChart2.value.clear();
   }
-  const x = examOptions1.value.map(item => item.name);
+  const x = monthexam2.value.map(item => item.name);
   setTimeout(function () {
     myChart2.value = echarts.init(pieChart.value!)
     myChart2.value.setOption({
@@ -185,7 +201,7 @@ function chartOptions1() {
           type: 'pie',
           radius: '30%',
           center: ['60%', '50%'],
-          data: examOptions1.value,
+          data: monthexam2.value,
           emphasis: {
             itemStyle: {
               shadowBlur: 10,
@@ -204,14 +220,14 @@ function chartOptions1() {
   }, 100);
 }
 function chartOptions2() {
-  if (myChart1.value) {
-    myChart1.value.clear();
+  if (myChart3.value) {
+    myChart3.value.clear();
   }
   const x = monthexam1.value.map(item => item.name);
   const y = monthexam1.value.map(item => item.score);
   setTimeout(function () {
-    myChart1.value = echarts.init(barChart1.value!);
-    myChart1.value.setOption({
+    myChart3.value = echarts.init(barChart1.value!);
+    myChart3.value.setOption({
       title: {
         text: "班级平均成绩",
         x: 'center'
